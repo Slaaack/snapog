@@ -306,6 +306,7 @@ export default function AppPage() {
   const [fIdx, setFIdx] = useState(0);
   const [ts, setTs] = useState(56);
   const [ss, setSs] = useState(26);
+  const [copied, setCopied] = useState(false);
 
   const preset = PRESETS[pIdx];
 
@@ -330,97 +331,213 @@ export default function AppPage() {
 
   const apiUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/og?title=${encodeURIComponent(title)}&subtitle=${encodeURIComponent(subtitle)}&domain=${encodeURIComponent(domain)}&theme=${PRESETS[pIdx].name.toLowerCase()}&template=${TEMPLATES[tIdx].id}`;
 
-  const lbl: React.CSSProperties = { display: "block", fontSize: "10px", letterSpacing: "1.5px", textTransform: "uppercase", color: "#555", fontWeight: 700, marginBottom: "8px" };
-  const inp: React.CSSProperties = { width: "100%", padding: "11px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", color: "#e4e4e7", fontSize: "14px", fontFamily: "inherit", outline: "none" };
+  const copyUrl = () => {
+    navigator.clipboard.writeText(apiUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Style tokens
+  const lbl: React.CSSProperties = {
+    display: "block", fontSize: "11px", fontWeight: 600,
+    color: "#78716c", marginBottom: "6px", letterSpacing: "0.2px",
+  };
+  const inp: React.CSSProperties = {
+    width: "100%", padding: "10px 12px",
+    background: "#fff", border: "1px solid #e7e5e4",
+    borderRadius: "8px", color: "#1c1917", fontSize: "14px",
+    fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+    transition: "border-color 0.15s",
+  };
+  const section: React.CSSProperties = { marginBottom: "22px" };
 
   return (
-    <div style={{ minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh", background: "#FAFAF9", display: "flex", flexDirection: "column" }}>
+
       {/* Nav */}
-      <div style={{ padding: "14px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <Link href="/" style={{ fontSize: "18px", fontWeight: 800, background: "linear-gradient(135deg, #f97316, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", textDecoration: "none" }}>SnapOG</Link>
-          <Link href="/checker" style={{ color: "#666", fontSize: "12px", textDecoration: "none" }}>OG Checker</Link>
+      <div style={{
+        padding: "14px 28px", borderBottom: "1px solid #e7e5e4",
+        background: "#fff", display: "flex", justifyContent: "space-between",
+        alignItems: "center", gap: "10px",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <Link href="/" style={{
+            fontSize: "17px", fontWeight: 800, color: "#1c1917",
+            textDecoration: "none", letterSpacing: "-0.4px",
+          }}>
+            Snap<span style={{ color: "#f97316" }}>OG</span>
+          </Link>
+          <Link href="/checker" style={{ color: "#a8a29e", fontSize: "13px", textDecoration: "none", fontWeight: 500 }}>
+            OG Checker
+          </Link>
         </div>
-        <button onClick={download} style={{ padding: "8px 20px", background: "linear-gradient(135deg, #f97316, #ec4899)", border: "none", borderRadius: "8px", color: "#fff", fontSize: "12px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-          Download PNG
+        <button onClick={download} style={{
+          padding: "9px 20px", background: "#f97316",
+          border: "none", borderRadius: "8px", color: "#fff",
+          fontSize: "13px", fontWeight: 700, cursor: "pointer",
+          fontFamily: "inherit", boxShadow: "0 1px 4px rgba(249,115,22,0.3)",
+        }}>
+          ↓ Download PNG
         </button>
       </div>
 
-      {/* Canvas */}
-      <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <canvas ref={canvasRef} style={{ width: "100%", maxWidth: "680px", height: "auto", aspectRatio: "1200/630", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", display: "block" }} />
-      </div>
+      {/* Main: side-by-side */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
-      {/* Controls */}
-      <div style={{ padding: "20px 24px 40px" }}>
-        <div style={{ marginBottom: "16px" }}>
-          <label style={lbl}>Title</label>
-          <input value={title} onChange={e => setTitle(e.target.value)} style={inp} />
-        </div>
-        <div style={{ marginBottom: "16px" }}>
-          <label style={lbl}>Subtitle</label>
-          <input value={subtitle} onChange={e => setSubtitle(e.target.value)} style={inp} />
-        </div>
-        <div style={{ marginBottom: "20px" }}>
-          <label style={lbl}>Domain</label>
-          <input value={domain} onChange={e => setDomain(e.target.value)} style={{ ...inp, maxWidth: "260px" }} />
-        </div>
+        {/* Left: controls */}
+        <div style={{
+          width: "320px", flexShrink: 0, background: "#fff",
+          borderRight: "1px solid #e7e5e4", padding: "24px 22px",
+          overflowY: "auto",
+        }}>
 
-        {/* Templates */}
-        <div style={{ marginBottom: "20px" }}>
-          <label style={lbl}>Template</label>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {TEMPLATES.map((t, i) => (
-              <button key={t.id} onClick={() => setTIdx(i)} style={{ padding: "7px 14px", background: tIdx === i ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.03)", border: `1px solid ${tIdx === i ? "#f97316" : "rgba(255,255,255,0.07)"}`, borderRadius: "6px", color: tIdx === i ? "#f97316" : "#777", fontSize: "12px", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>{t.name}</button>
-            ))}
+          <div style={section}>
+            <label style={lbl}>Title</label>
+            <input value={title} onChange={e => setTitle(e.target.value)} style={inp} placeholder="Your post title" />
+          </div>
+
+          <div style={section}>
+            <label style={lbl}>Subtitle</label>
+            <input value={subtitle} onChange={e => setSubtitle(e.target.value)} style={inp} placeholder="Optional tagline" />
+          </div>
+
+          <div style={section}>
+            <label style={lbl}>Domain</label>
+            <input value={domain} onChange={e => setDomain(e.target.value)} style={{ ...inp, maxWidth: "220px" }} placeholder="yourblog.com" />
+          </div>
+
+          <div style={{ height: "1px", background: "#f5f5f4", margin: "4px 0 22px" }} />
+
+          {/* Templates */}
+          <div style={section}>
+            <label style={lbl}>Template</label>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              {TEMPLATES.map((t, i) => (
+                <button key={t.id} onClick={() => setTIdx(i)} style={{
+                  padding: "6px 14px",
+                  background: tIdx === i ? "#fff7ed" : "#fafaf9",
+                  border: `1px solid ${tIdx === i ? "#f97316" : "#e7e5e4"}`,
+                  borderRadius: "6px",
+                  color: tIdx === i ? "#ea580c" : "#78716c",
+                  fontSize: "12px", fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Themes */}
+          <div style={section}>
+            <label style={lbl}>Theme — <span style={{ color: "#a8a29e", fontWeight: 400 }}>{PRESETS[pIdx].name}</span></label>
+            <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
+              {PRESETS.map((p, i) => (
+                <button
+                  key={p.name} onClick={() => setPIdx(i)} title={p.name}
+                  style={{
+                    width: "36px", height: "26px", borderRadius: "6px", cursor: "pointer",
+                    background: `linear-gradient(135deg, ${p.from}, ${p.to})`,
+                    border: pIdx === i ? "2px solid #f97316" : "2px solid transparent",
+                    boxShadow: pIdx === i ? "0 0 0 2px #fff, 0 0 0 4px #f97316" : "none",
+                    transition: "box-shadow 0.15s",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Font */}
+          <div style={section}>
+            <label style={lbl}>Font</label>
+            <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+              {FONTS.map((f, i) => (
+                <button key={f} onClick={() => setFIdx(i)} style={{
+                  padding: "5px 11px",
+                  background: fIdx === i ? "#fff7ed" : "#fafaf9",
+                  border: `1px solid ${fIdx === i ? "#f97316" : "#e7e5e4"}`,
+                  borderRadius: "5px",
+                  color: fIdx === i ? "#ea580c" : "#78716c",
+                  fontSize: "11px", cursor: "pointer", fontFamily: f,
+                }}>
+                  {f.split(" ")[0]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Size sliders */}
+          <div style={section}>
+            <label style={lbl}>Title size — {ts}px</label>
+            <input type="range" min="32" max="80" value={ts}
+              onChange={e => setTs(+e.target.value)}
+              style={{ width: "100%", cursor: "pointer", accentColor: "#f97316" }} />
+          </div>
+          <div style={section}>
+            <label style={lbl}>Subtitle size — {ss}px</label>
+            <input type="range" min="16" max="40" value={ss}
+              onChange={e => setSs(+e.target.value)}
+              style={{ width: "100%", cursor: "pointer", accentColor: "#f97316" }} />
           </div>
         </div>
 
-        {/* Colors */}
-        <div style={{ marginBottom: "20px" }}>
-          <label style={lbl}>Theme</label>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {PRESETS.map((p, i) => (
-              <button key={p.name} onClick={() => setPIdx(i)} title={p.name} style={{ width: "40px", height: "28px", borderRadius: "6px", cursor: "pointer", background: `linear-gradient(135deg, ${p.from}, ${p.to})`, border: `2px solid ${pIdx === i ? "#f97316" : "transparent"}` }} />
-            ))}
-          </div>
-        </div>
+        {/* Right: canvas + outputs */}
+        <div style={{ flex: 1, padding: "28px 32px", overflowY: "auto" }}>
 
-        {/* Font */}
-        <div style={{ marginBottom: "20px" }}>
-          <label style={lbl}>Font</label>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {FONTS.map((f, i) => (
-              <button key={f} onClick={() => setFIdx(i)} style={{ padding: "5px 12px", background: fIdx === i ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.03)", border: `1px solid ${fIdx === i ? "#f97316" : "rgba(255,255,255,0.07)"}`, borderRadius: "5px", color: fIdx === i ? "#f97316" : "#666", fontSize: "11px", cursor: "pointer", fontFamily: f }}>{f.split(" ")[0]}</button>
-            ))}
+          {/* Canvas preview */}
+          <div style={{
+            background: "#f5f5f4", borderRadius: "14px", padding: "20px",
+            marginBottom: "24px", border: "1px solid #e7e5e4",
+          }}>
+            <canvas ref={canvasRef} style={{
+              width: "100%", height: "auto", aspectRatio: "1200/630",
+              borderRadius: "8px", display: "block",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+            }} />
           </div>
-        </div>
 
-        {/* Sizes */}
-        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "24px" }}>
-          <div style={{ flex: 1, minWidth: "160px" }}>
-            <label style={lbl}>Title: {ts}px</label>
-            <input type="range" min="32" max="80" value={ts} onChange={e => setTs(+e.target.value)} style={{ width: "100%", cursor: "pointer" }} />
+          {/* API URL */}
+          <div style={{
+            background: "#fff", border: "1px solid #e7e5e4",
+            borderRadius: "12px", padding: "18px", marginBottom: "14px",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <label style={{ ...lbl, marginBottom: 0, color: "#16a34a", fontSize: "12px" }}>
+                🔗 API URL — use as your og:image src
+              </label>
+              <button onClick={copyUrl} style={{
+                padding: "4px 12px", background: copied ? "#dcfce7" : "#f0fdf4",
+                border: `1px solid ${copied ? "#86efac" : "#bbf7d0"}`,
+                borderRadius: "6px", color: copied ? "#15803d" : "#16a34a",
+                fontSize: "11px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+              }}>
+                {copied ? "✓ Copied!" : "Copy"}
+              </button>
+            </div>
+            <code style={{
+              display: "block", padding: "10px 12px",
+              background: "#f0fdf4", borderRadius: "6px",
+              fontSize: "10px", color: "#15803d",
+              overflow: "auto", wordBreak: "break-all", lineHeight: 1.7,
+            }}>{apiUrl}</code>
           </div>
-          <div style={{ flex: 1, minWidth: "160px" }}>
-            <label style={lbl}>Subtitle: {ss}px</label>
-            <input type="range" min="16" max="40" value={ss} onChange={e => setSs(+e.target.value)} style={{ width: "100%", cursor: "pointer" }} />
+
+          {/* Meta tags */}
+          <div style={{
+            background: "#fff", border: "1px solid #e7e5e4",
+            borderRadius: "12px", padding: "18px",
+          }}>
+            <label style={{ ...lbl, color: "#ea580c", fontSize: "12px" }}>
+              {"</>"} HTML Meta Tags — paste into your {"<head>"}
+            </label>
+            <pre style={{
+              margin: "8px 0 0", padding: "12px",
+              background: "#fff7ed", borderRadius: "6px",
+              fontSize: "10px", color: "#9a3412",
+              overflow: "auto", lineHeight: 1.8,
+              whiteSpace: "pre-wrap", wordBreak: "break-all",
+            }}>{`<meta property="og:image" content="${apiUrl}" />\n<meta property="og:title" content="${title}" />\n<meta property="og:description" content="${subtitle}" />\n<meta name="twitter:card" content="summary_large_image" />`}</pre>
           </div>
-        </div>
-
-        {/* API URL */}
-        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "16px", marginBottom: "16px" }}>
-          <label style={{ ...lbl, color: "#22c55e" }}>API URL (use as og:image)</label>
-          <code style={{ display: "block", padding: "10px", background: "rgba(0,0,0,0.4)", borderRadius: "6px", fontSize: "10px", color: "#22c55e", overflow: "auto", wordBreak: "break-all", lineHeight: 1.6 }}>{apiUrl}</code>
-        </div>
-
-        {/* Meta tags */}
-        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "16px" }}>
-          <label style={{ ...lbl, color: "#f97316" }}>HTML Meta Tags</label>
-          <pre style={{ margin: "8px 0 0", padding: "12px", background: "rgba(0,0,0,0.4)", borderRadius: "6px", fontSize: "10px", color: "#777", overflow: "auto", lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{`<meta property="og:image" content="${apiUrl}" />
-<meta property="og:title" content="${title}" />
-<meta property="og:description" content="${subtitle}" />
-<meta name="twitter:card" content="summary_large_image" />`}</pre>
         </div>
       </div>
     </div>
